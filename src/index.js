@@ -1,6 +1,6 @@
 import './css/styles.css';
 import { fetchCountries } from './fetchCountries';
-import Notiflix from 'notiflix';
+import Notiflix, { Loading } from 'notiflix';
 
 const debounce = require('lodash.debounce');
 
@@ -13,14 +13,18 @@ inputEl.addEventListener('input', debounce(onInputCountry, DEBOUNCE_DELAY));
 
 function onInputCountry(e) {
   const nameCountry = e.target.value;
-  if (nameCountry === '') return;
+  if (nameCountry === '') {
+    countryListEl.innerHTML = '';
+    countryInfoEl.innerHTML = '';
+    return;
+  }
+
   fetchCountries(nameCountry.trim()).then(country => {
     if (country.length > 10) {
       Notiflix.Notify.info(
         'Too many matches found. Please enter a more specific name.'
       );
-      return;
-    } else if (country.length > 2 && country.length < 10) {
+    } else if (country.length >= 2 && country.length <= 10) {
       createListCountry(country);
     } else if (country.length === 1) {
       createCardCountry(country);
@@ -28,25 +32,43 @@ function onInputCountry(e) {
   });
 }
 
-function createListCountry(params) {
+function createListCountry(arrayCountries) {
   countryListEl.innerHTML = '';
+  changeVisuallyHiden(countryListEl, countryInfoEl);
 
-  params.map(country => {
+  arrayCountries.map(country => {
     const li = document.createElement('li');
+    const img = document.createElement('img');
     li.textContent = country.name;
+    img.src = country.flags.svg;
+    img.width = '20';
+    img.height = '20';
 
+    li.prepend(img);
     countryListEl.append(li);
   });
+  Notiflix.Notify.success('Countries found');
 }
 
-function createCardCountry(country) {
-  country.map(c => {
-    console.log(c.flags.svg);
+function createCardCountry(countryAray) {
+  changeVisuallyHiden(countryInfoEl, countryListEl);
+
+  countryAray.map(country => {
+    const langName = country.languages.map(lang => lang.name).join(', ');
+
     countryInfoEl.innerHTML = `
-    
-    <h2><img src="${c.flags.svg}" width="30" height="25"></img>  ${c.name}</h2>
-    <p>Capital: ${c.capital}</p>
-    <p>Population: ${c.population}</p>
+    <div class="title-wraper">
+    <img src="${country.flags.svg}" width="30" height="25"></img>
+    <h2>${country.name}</h2></div>
+    <p><span>Capital:</span> ${country.capital}</p>
+    <p><span>Population:</span> ${country.population}</p>
+    <p><span>Languages:</span> ${langName}</p>
     `;
   });
+  Notiflix.Notify.success('Country found');
+}
+
+function changeVisuallyHiden(removeEl, addEl) {
+  removeEl.classList.remove('visually-hidden');
+  addEl.classList = 'visually-hidden';
 }
