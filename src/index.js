@@ -3,6 +3,7 @@ import { fetchCountries } from './fetchCountries';
 import Notiflix, { Loading } from 'notiflix';
 
 const debounce = require('lodash.debounce');
+const throttle = require('lodash.throttle');
 
 const DEBOUNCE_DELAY = 300;
 const inputEl = document.querySelector('#search-box');
@@ -14,22 +15,27 @@ inputEl.addEventListener('input', debounce(onInputCountry, DEBOUNCE_DELAY));
 function onInputCountry(e) {
   const nameCountry = e.target.value;
   if (nameCountry === '') {
-    countryListEl.innerHTML = '';
-    countryInfoEl.innerHTML = '';
+    clearListHTML();
     return;
   }
 
-  fetchCountries(nameCountry.trim()).then(country => {
-    if (country.length > 10) {
-      Notiflix.Notify.info(
-        'Too many matches found. Please enter a more specific name.'
-      );
-    } else if (country.length >= 2 && country.length <= 10) {
-      createListCountry(country);
-    } else if (country.length === 1) {
-      createCardCountry(country);
-    }
-  });
+  fetchCountries(nameCountry.trim())
+    .then(country => {
+      if (country.length > 10) {
+        Notiflix.Notify.info(
+          'Too many matches found. Please enter a more specific name.'
+        );
+      } else if (country.length >= 2 && country.length <= 10) {
+        createListCountry(country);
+      } else if (country.length === 1) {
+        createCardCountry(country);
+      }
+    })
+    .catch(error => {
+      Notiflix.Notify.failure('Oops, there is no country with that name');
+      console.error(error);
+      clearListHTML();
+    });
 }
 
 function createListCountry(arrayCountries) {
@@ -47,7 +53,6 @@ function createListCountry(arrayCountries) {
     li.prepend(img);
     countryListEl.append(li);
   });
-  Notiflix.Notify.success('Countries found');
 }
 
 function createCardCountry(countryAray) {
@@ -65,10 +70,14 @@ function createCardCountry(countryAray) {
     <p><span>Languages:</span> ${langName}</p>
     `;
   });
-  Notiflix.Notify.success('Country found');
 }
 
 function changeVisuallyHiden(removeEl, addEl) {
   removeEl.classList.remove('visually-hidden');
   addEl.classList = 'visually-hidden';
+}
+
+function clearListHTML() {
+  countryListEl.innerHTML = '';
+  countryInfoEl.innerHTML = '';
 }
