@@ -25,6 +25,7 @@ function onInputCountry(e) {
         Notiflix.Notify.info(
           'Too many matches found. Please enter a more specific name.'
         );
+        clearListHTML();
       } else if (country.length >= 2 && country.length <= 10) {
         createListCountry(country);
       } else if (country.length === 1) {
